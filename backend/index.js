@@ -9,6 +9,10 @@ const prisma = new PrismaClient();
 const app = express();
 app.use(cors());
 app.use(express.json()); // 让 express 能解析 JSON 格式的请求体
+app.get('/', (req, res) => {
+  res.send('Hello from backend!');
+});
+
 // ==================== Todo CRUD（需要 token 验证） ====================
 // 获取当前用户的所有任务
 app.get('/api/todos', authMiddleware, async (req, res) => {
@@ -84,24 +88,22 @@ app.delete('/api/todos/:id', authMiddleware, async (req, res) => {
     res.status(500).json({ error: '删除任务失败' });
   }
 });
-/**
- * 测试路由：检查服务器是否运行
- * @route GET /
- * @returns {string} 返回欢迎消息 'Hello from backend!'
- */
-app.get('/', (req, res) => {
-  res.send('Hello from backend!');
-});
+// app.delete('/api/todos/completed', authMiddleware, async (req, res) => {
+//   try {
+//     // 先确认该任务属于当前用户
+//     // const existingTodo = await prisma.todo.findFirst({
+//     //   where: { id: Number(id), userId: req.userId }
+//     // });
+//     // if (!existingTodo) {
+//     //   return res.status(404).json({ error: '任务不存在或无权操作' });
+//     // }
+//     await prisma.todo.delete({ where: { completed: true } });
+//     res.status(204).send(); // 无内容响应
+//   } catch (error) {
+//     res.status(500).json({ error: '删除任务失败' });
+//   }
+// });
 
-/**
- * 用户注册接口
- * @route POST /api/register
- * @param {Object} req - Express 请求对象
- * @param {string} req.body.email - 用户邮箱
- * @param {string} req.body.password - 用户密码
- * @param {Object} res - Express 响应对象
- * @returns {Object} 注册成功时返回包含消息和用户ID的JSON对象，失败时返回错误信息
- */
 app.post('/api/register', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
