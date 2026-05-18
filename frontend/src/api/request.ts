@@ -1,14 +1,9 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 
-// const request: AxiosInstance = axios.create({
-//   baseURL: '/',  // 因为 vite 代理了 /api，所以 baseURL 留空
-//   timeout: 10000
-// })
-const request = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10000
-})
+
+const baseURL = import.meta.env.VITE_API_URL || '/'
+const request = axios.create({ baseURL, timeout: 10000 })
 // 请求拦截器：添加 token
 request.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {

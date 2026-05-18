@@ -12,7 +12,8 @@ app.use(express.json()); // 让 express 能解析 JSON 格式的请求体
 app.get('/', (req, res) => {
   res.send('Hello from backend!');
 });
-
+const JWT_SECRET = process.env.JWT_SECRET || 'my_secret_key';
+// 将后面所有 jwt.sign 和 jwt.verify 中的 'my_secret_key' 替换为 JWT_SECRET
 // ==================== Todo CRUD（需要 token 验证） ====================
 // 获取当前用户的所有任务
 app.get('/api/todos', authMiddleware, async (req, res) => {
