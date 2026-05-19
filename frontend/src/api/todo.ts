@@ -26,4 +26,7 @@ export function updateTodoApi(id: number, data: { title?: string; completed?: bo
 // 删除任务
 export function deleteTodoApi(id: number) {
   return request.delete(`/api/todos/${id}`)
+}// 批量删除所有已完成任务
+export function deleteCompletedTodosApi() {
+  return request.delete('/api/todos/completed')
 }

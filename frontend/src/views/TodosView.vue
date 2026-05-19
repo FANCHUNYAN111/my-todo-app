@@ -15,6 +15,13 @@
             style="width: 300px"
           />
           <n-button type="primary" @click="addTodo" :loading="adding">添加</n-button>
+          <n-button
+            type="warning"
+            @click="deleteCompletedTodos"
+            :loading="deletingCompleted"
+          >
+            批量删除已完成
+          </n-button>
         </n-space>
 
         <!-- 任务列表 -->
@@ -33,8 +40,8 @@
 <script setup lang="ts">
 import { ref, onMounted, h } from 'vue'
 import { useUserStore } from '@/stores/userStore'
-import { useMessage, NButton, NSwitch, NTag, NPopconfirm } from 'naive-ui'
-import { getTodosApi, createTodoApi, updateTodoApi, deleteTodoApi, type Todo } from '@/api/todo'
+import { NButton,useMessage, NSwitch,  NPopconfirm, NInput } from 'naive-ui'
+import { getTodosApi, createTodoApi, updateTodoApi, deleteTodoApi,deleteCompletedTodosApi , type Todo } from '@/api/todo'
 
 const userStore = useUserStore()
 const message = useMessage()
@@ -43,7 +50,24 @@ const todos = ref<Todo[]>([])
 const loading = ref(false)
 const adding = ref(false)
 const newTodoTitle = ref('')
+// 记录正在编辑的任务 id，null 表示没有在编辑
+const editingId = ref<number | null>(null)
+const editingTitle = ref('')
+const deletingCompleted = ref(false)
 
+async function deleteCompletedTodos() {
+  deletingCompleted.value = true
+  try {
+    const res = await deleteCompletedTodosApi()
+    message.success(res?.message || `删除了 ${res?.count} 个任务`)
+    // 重新加载任务列表，或者直接从本地列表中过滤掉 completed 的任务
+    await loadTodos()  // 简单重新加载
+  } catch (err: any) {
+    message.error(err.response?.data?.error || '批量删除失败')
+  } finally {
+    deletingCompleted.value = false
+  }
+}
 // 定义表格列（使用 Naive UI 的渲染函数）
 const columns = [
   {
@@ -53,21 +77,36 @@ const columns = [
     render(row: Todo) {
       return h(NSwitch, {
         value: row.completed,
-        onUpdateValue: (val: boolean) => toggleComplete(row, val),
+        onUpdateValue: (val: boolean) => toggleComplete(row, val)},)
+    }
+  },
+
+{
+  title: '任务标题',
+  key: 'title',
+  ellipsis: true,
+  render(row: Todo) {
+    // 如果当前行正在编辑，显示输入框
+    if (editingId.value === row.id) {
+      return h(NInput, {
+        value: editingTitle.value,
+        onUpdateValue: (val: string) => editingTitle.value = val,
+        onBlur: () => saveTitle(row.id),
+        onKeypress: (e: KeyboardEvent) => {
+          if (e.key === 'Enter') saveTitle(row.id)
+        },
+        autofocus: true,
         size: 'small'
       })
     }
-  },
-  {
-    title: '任务标题',
-    key: 'title',
-    ellipsis: true,
-    render(row: Todo) {
-      return row.completed
-        ? h('span', { style: 'text-decoration: line-through; color: #999' }, row.title)
-        : row.title
-    }
-  },
+    // 否则显示文本，并绑定双击事件
+    return h('span', {
+      style: row.completed ? 'text-decoration: line-through; color: #999; cursor: pointer' : 'cursor: pointer',
+      ondblclick: () => startEdit(row)
+    }, row.title)
+  }
+},
+
   {
     title: '创建时间',
     key: 'createdAt',
@@ -95,7 +134,34 @@ const columns = [
     }
   }
 ]
+function startEdit(todo: Todo) {
+  editingId.value = todo.id
+  editingTitle.value = todo.title
+}
 
+async function saveTitle(id: number) {
+  const newTitle = editingTitle.value.trim()
+  if (!newTitle) {
+    message.warning('标题不能为空')
+    editingId.value = null
+    return
+  }
+  // 找到原任务
+  const todo = todos.value.find(t => t.id === id)
+  if (!todo) return
+  const oldTitle = todo.title
+  // 乐观更新
+  todo.title = newTitle
+  editingId.value = null
+  try {
+    await updateTodoApi(id, { title: newTitle })
+    message.success('修改成功')
+  } catch (err: any) {
+    // 失败回滚
+    todo.title = oldTitle
+    message.error(err.response?.data?.error || '修改失败')
+  }
+}
 // 加载所有任务
 async function loadTodos() {
   loading.value = true

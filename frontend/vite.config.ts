@@ -17,6 +17,9 @@ export default defineConfig({
       }
     }
   },
+  // target: 'https://my-todo-app-production-4c38.up.railway.app',
+
+  //  target: 'http://localhost:3000',
   server: {
     proxy: {
       '/api': {

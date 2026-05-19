@@ -14,7 +14,6 @@ const router = createRouter({
 // 路由守卫：改为直接返回，不再使用 next 回调
 router.beforeEach((to, from) => {
   const token = localStorage.getItem('token')
-  console.log(token)
   if (to.meta.requiresAuth && !token) {
     return '/login'
   } else if ((to.path === '/login' || to.path === '/register') && token) {
