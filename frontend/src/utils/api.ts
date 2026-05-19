@@ -1,6 +1,6 @@
 import type { AuthResponse, Todo, TodoInput, User } from '../types';
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   // token 是后端登录成功后发给前端的“通行证”。
@@ -10,8 +10,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'token': token ? token : '',
-      // ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      // 'token': token ? token : '',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
