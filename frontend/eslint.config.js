@@ -1,42 +1,33 @@
-// eslint.config.js
-import { globalIgnores } from 'eslint/config'
-import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
-import pluginVue from 'eslint-plugin-vue'
-import pluginOxlint from 'eslint-plugin-oxlint'
-import skipFormatting from 'eslint-config-prettier/flat'
-import tseslint from 'typescript-eslint'
-import vueParser from 'vue-eslint-parser'
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
 
-export default defineConfigWithVueTs(
+export default [
+  { ignores: ['dist'] },
+  ...tseslint.configs.recommended,
   {
-    name: 'app/files-to-lint',
-    files: ['**/*.{vue,ts,mts,tsx}'],
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
-      parser: vueParser,
+      ecmaVersion: 2020,
+      globals: globals.browser,
       parserOptions: {
-        parser: tseslint.parser,
-        vueVersion: '3',
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
       },
     },
     plugins: {
-      vue: pluginVue,
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
     },
     rules: {
-      'vue/no-v-model-argument': 'off',
-      'vue/valid-v-model': 'error',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
+      ...js.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
+      'no-undef': 'off',
+      'no-unused-vars': 'off',
+      'react-refresh/only-export-components': 'off',
     },
   },
-
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
-
-  ...pluginVue.configs['flat/essential'],
-  vueTsConfigs.recommended,
-
-  ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
-
-  skipFormatting,
-)
+];
